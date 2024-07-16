@@ -8,11 +8,11 @@ pub fn k_way_external_merge_sort<T: Ord + Debug>(
     assert!(k > 0);
     assert!(page_size > 0);
 
-    println!("run (k, page_size): ({}, {})", k, page_size);
+    // println!("run (k, page_size): ({}, {})", k, page_size);
     let mut n = 0;
     loop {
         v = pass_n(v, k, page_size, n);
-        println!("pass_{} {:?}", n, v);
+        // println!("pass_{} {:?}", n, v);
         let pass_item_count = get_pass_n_page_count(k, n) * page_size;
         if pass_item_count >= v.len() {
             break;
@@ -39,7 +39,7 @@ fn pass_n<T: Ord + Debug>(mut v: Vec<T>, k: usize, page_size: usize, n: usize) -
             }
         }
 
-        let mut page_groups = build_page_groups(pages, k, pass_page_count);
+        let mut page_groups = build_page_groups(pages, k);
         let mut local_result = vec![];
 
         loop {
@@ -87,12 +87,13 @@ fn pass_n<T: Ord + Debug>(mut v: Vec<T>, k: usize, page_size: usize, n: usize) -
     result
 }
 
-fn build_page_groups<T: Ord + Debug>(
-    mut pages: Vec<Vec<T>>,
-    k: usize,
-    page_run_size: usize,
-) -> Vec<Vec<Vec<T>>> {
-    let group_count = page_run_size / k;
+/**
+ * Take a list of pages as input and split them in k complete groups
+ */
+fn build_page_groups<T: Ord + Debug>(mut pages: Vec<Vec<T>>, k: usize) -> Vec<Vec<Vec<T>>> {
+    assert!(pages.len() % k == 0);
+
+    let group_count = pages.len() / k;
     let mut groups = Vec::with_capacity(group_count);
 
     for _ in 0..group_count {
@@ -121,4 +122,50 @@ fn build_n_next_pages<T: Ord + Debug>(
 
 fn get_pass_n_page_count(k: usize, n: usize) -> usize {
     k * 2_usize.pow(n as u32)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_sorted() {
+        let original = vec![5, 9, 5, 2, 5, 4, 0, 9, 1, 3];
+        let is_sorted = |v: Vec<i32>| v.windows(2).all(|w| w[0] <= w[1]);
+
+        assert!(is_sorted(k_way_external_merge_sort(original.clone(), 2, 3)));
+        assert!(is_sorted(k_way_external_merge_sort(original.clone(), 3, 3)));
+        assert!(is_sorted(k_way_external_merge_sort(original.clone(), 2, 1)));
+        assert!(is_sorted(k_way_external_merge_sort(original.clone(), 1, 5)));
+        assert!(is_sorted(k_way_external_merge_sort(original.clone(), 1, 1)));
+    }
+
+    #[test]
+    fn build_n_next_pages() {
+        let original = vec![5, 9, 5, 2, 5, 4, 0, 9, 1, 3];
+        let (pages, rest) = super::build_n_next_pages(original, 2, 2);
+
+        assert_eq!(vec![vec![5, 9], vec![5, 2]], pages);
+        assert_eq!(vec![5, 4, 0, 9, 1, 3], rest);
+    }
+
+    #[test]
+    fn build_page_groups() {
+        let pages = vec![
+            vec![1, 2, 3],
+            vec![4, 5, 6],
+            vec![7, 8, 9],
+            vec![10, 11, 12],
+            vec![13, 14, 15],
+            vec![16, 17, 18],
+        ];
+
+        assert_eq!(
+            vec![
+                vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
+                vec![vec![10, 11, 12], vec![13, 14, 15], vec![16, 17, 18]]
+            ],
+            super::build_page_groups(pages, 3) // which means that each group should contain 3 pages
+        );
+    }
 }
