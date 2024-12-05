@@ -1,5 +1,7 @@
+mod bubble_sort;
 mod k_way_external_merge_sort;
 
+use bubble_sort::bubble_sort;
 use k_way_external_merge_sort::k_way_external_merge_sort;
 
 fn main() {
@@ -22,5 +24,11 @@ fn main() {
     );
 
     println!("-----------------------------------------");
-    println!("sorted 1;5 {:?}", k_way_external_merge_sort(original, 1, 5));
+    println!(
+        "sorted 1;5 {:?}",
+        k_way_external_merge_sort(original.clone(), 1, 5)
+    );
+    
+    println!("-----------------------------------------");
+    println!("bubble {:?}", bubble_sort(original.clone()));
 }
